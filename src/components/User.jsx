@@ -13,10 +13,12 @@ const User = () => {
         profileDocument: null // Changed to null since it will be a file
     });
     const [editingUserID, setEditingUserID] = useState(null); // Track the user being edited
+    const [currentUser, setCurrentUser] = useState(null); // To store current logged-in user
 
     useEffect(() => {
         fetchUsers();
         fetchDepartments();
+        getCurrentUser();  // Fetch current logged-in user data
     }, []);
 
     const fetchUsers = async () => {
@@ -34,6 +36,34 @@ const User = () => {
             setDepartments(response.data);  // Ensure the response structure is as expected
         } catch (error) {
             console.error('Error fetching departments:', error);
+        }
+    };
+
+    const getCurrentUser = async () => {
+        const token = localStorage.getItem("authToken");  // Retrieve the token
+
+        if (!token) {
+            console.log("User is not logged in.");
+            return;
+        }
+
+        try {
+            const response = await fetch("https://localhost:7062/api/UserRegisterController/current", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,  // Send the token in the Authorization header
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setCurrentUser(data);  // Set the current user data
+            } else {
+                console.error(data.message);  // Error message
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
         }
     };
 
@@ -124,11 +154,19 @@ const User = () => {
     return (
         <div>
             <h2>Users</h2>
+            {currentUser ? (
+                <div>
+                    <h3>Logged In As: {currentUser.fullName} - {currentUser.role}</h3>
+                    <img src={currentUser.profileDocument} alt="Profile" />
+                </div>
+            ) : (
+                <p>Please log in to view user details.</p>
+            )}
+
             <ul>
                 {users.map(user => (
                     <li key={user.userID}>
-                        {user.fullName} - {user.email} - {user.role} -
-                        {user.department?.departmentName || "No Department"}
+                        {user.fullName} - {user.email} - {user.role} - {user.department?.departmentName || "No Department"}
                         <button onClick={() => handleEditUser(user)}>Edit</button>
                         <button onClick={() => handleDeleteUser(user.userID)}>Delete</button>
                     </li>
