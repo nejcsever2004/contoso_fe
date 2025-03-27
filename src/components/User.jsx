@@ -48,7 +48,7 @@ const User = () => {
         }
 
         try {
-            const response = await fetch("https://localhost:7062/api/UserRegisterController/current", {
+            const response = await fetch("https://localhost:7062/api/userregister/current", {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`,  // Send the token in the Authorization header

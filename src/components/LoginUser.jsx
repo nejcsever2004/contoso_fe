@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const LoginUser = ({ setIsAuthenticated }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,26 +26,32 @@ const LoginUser = ({ setIsAuthenticated }) => {
                 Password: password,
             });
 
-            if (response.data && response.data.token && response.data.email && response.data.fullName) {
-                const { token, email: userEmail, fullName } = response.data;
+            if (response.data && response.data.token && response.data.email && response.data.fullName && response.data.role) {
+                const { token, email: userEmail, fullName, role } = response.data;
+                const userID = response.data.userID || null; // Check if userID is present, otherwise set it to null
 
-                // Store the JWT token and user info in localStorage
+                // Store the JWT token, user info, and role in localStorage
                 localStorage.setItem('authToken', token);
                 localStorage.setItem('username', fullName);
                 localStorage.setItem('email', userEmail);
-
-                // Debugging: Check if the values are correctly saved in localStorage
-                console.log('Stored data in localStorage:', {
-                    authToken: localStorage.getItem('authToken'),
-                    username: localStorage.getItem('username'),
-                    email: localStorage.getItem('email'),
-                });
+                localStorage.setItem('role', role);
+                localStorage.setItem('userID', userID); // Store the userID in localStorage
 
                 // After storing the token, update the authentication state
-                setIsAuthenticated(true); // Update the authentication state
+                setIsAuthenticated(true);
 
-                // Optionally, navigate to a different page (e.g., dashboard or courses)
-                window.location.href = '/dashboard';
+                // Redirect based on role
+                if (role === 'Student') {
+                    console.log('Student Email:', userEmail);
+                    console.log('Student Token:', token);
+                    console.log('Student ID:', userID);
+                    navigate('/studentdashboard');
+                } else if (role === 'Teacher') {
+                    console.log('Teacher Email:', userEmail);
+                    console.log('Teacher Token:', token);
+                    console.log('Teacher ID:', userID);
+                    navigate('/courses');
+                }
             } else {
                 throw new Error('Unexpected response structure.');
             }
@@ -52,13 +60,10 @@ const LoginUser = ({ setIsAuthenticated }) => {
 
             // Handle different types of errors
             if (err.response) {
-                // If the server responded with an error
                 setError(err.response.data?.message || 'Login failed. Please check your credentials.');
             } else if (err.request) {
-                // If there was no response from the server
                 setError('No response received from the server. Please try again later.');
             } else {
-                // If there's an error while setting up the request
                 setError(`Error: ${err.message}`);
             }
         }

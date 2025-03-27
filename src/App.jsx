@@ -1,37 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';  // Correct import for Route and Routes
 import Course from './components/Course.jsx';
 import Department from './components/Department.jsx';
 import User from './components/User.jsx';
 import Grade from './components/Grade.jsx';
 import RegisterUser from './components/RegisterUser.jsx';
 import LoginUser from './components/LoginUser.jsx';
+import StudentDashboard from './components/StudentDashboard.jsx';
 
 const App = () => {
-    // Store the token from localStorage in a variable
     const authToken = localStorage.getItem('authToken');
+    const userRole = localStorage.getItem('role'); // Retrieve user role
 
-    // State to track whether the user is authenticated
     const [isAuthenticated, setIsAuthenticated] = useState(!!authToken);
+    const [role, setRole] = useState(userRole || '');
 
-    // Update the authentication state when localStorage changes
     useEffect(() => {
-        // Listen for changes in localStorage (on reload or login)
         const checkAuthToken = localStorage.getItem('authToken');
+        const storedRole = localStorage.getItem('role');
         setIsAuthenticated(!!checkAuthToken);
+        setRole(storedRole || '');
     }, [authToken]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('role');
+        setIsAuthenticated(false);
+        setRole('');
+    };
 
     return (
         <Router>
             <div style={{ padding: '20px' }}>
                 <h1>University Management System</h1>
+
                 <nav style={{ marginBottom: '20px' }}>
                     {isAuthenticated ? (
                         <>
-                            <Link to="/courses" style={{ marginRight: '15px' }}>Courses</Link>
-                            <Link to="/departments" style={{ marginRight: '15px' }}>Departments</Link>
-                            <Link to="/users" style={{ marginRight: '15px' }}>Users</Link>
-                            <Link to="/grades" style={{ marginRight: '15px' }}>Grades</Link>
+                            {role === 'Teacher' && (
+                                <>
+                                    <Link to="/courses" style={{ marginRight: '15px' }}>Courses</Link>
+                                    <Link to="/departments" style={{ marginRight: '15px' }}>Departments</Link>
+                                    <Link to="/users" style={{ marginRight: '15px' }}>Users</Link>
+                                    <Link to="/grades" style={{ marginRight: '15px' }}>Grades</Link>
+                                </>
+                            )}
+                            {role === 'Student' && (
+                                <Link to="/gradesandschedule" style={{ marginRight: '15px' }}>Grades & Schedule</Link>
+                            )}
+                            <button onClick={handleLogout} style={{ marginLeft: '15px' }}>Logout</button>
                         </>
                     ) : (
                         <>
@@ -42,22 +59,33 @@ const App = () => {
                 </nav>
 
                 <Routes>
-                    {/* Protected Routes */}
+                    {/* Protected routes for authenticated users */}
                     {isAuthenticated ? (
                         <>
-                            <Route path="/courses" element={<Course />} />
-                            <Route path="/departments" element={<Department />} />
-                            <Route path="/users" element={<User />} />
-                            <Route path="/grades" element={<Grade />} />
-                            <Route path="/" element={<h2>Welcome to the Dashboard!</h2>} />
+                            {role === 'Teacher' && (
+                                <>
+                                    <Route path="/courses" element={<Course />} />
+                                    <Route path="/departments" element={<Department />} />
+                                    <Route path="/users" element={<User />} />
+                                    <Route path="/grades" element={<Grade />} />
+                                    <Route path="*" element={<Navigate to="/courses" />} />
+                                </>
+                            )}
+                            {role === 'Student' && (
+                                <>
+                                    <Route path="/studentdashboard" element={<StudentDashboard />} /> {/* Route to show courses */}
+                                    <Route path="*" element={<Navigate to="/studentdashboard" />} /> {/* Default redirect for students */}
+                                </>
+                            )}
                         </>
                     ) : (
-                        <Route path="*" element={<Navigate to="/login" />} />
+                        <>
+                            {/* Public routes */}
+                            <Route path="/register" element={<RegisterUser />} />
+                            <Route path="/login" element={<LoginUser setIsAuthenticated={setIsAuthenticated} />} />
+                            <Route path="*" element={<Navigate to="/login" />} />
+                        </>
                     )}
-
-                    {/* Unprotected Routes */}
-                    <Route path="/register" element={<RegisterUser />} />
-                    <Route path="/login" element={<LoginUser setIsAuthenticated={setIsAuthenticated} />} />
                 </Routes>
             </div>
         </Router>
