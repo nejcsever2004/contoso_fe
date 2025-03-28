@@ -3,12 +3,18 @@ import axios from 'axios';
 
 const Course = () => {
     const [courses, setCourses] = useState([]);
-    const [newCourse, setNewCourse] = useState({ courseName: '', departmentId: '', teacherId: '' });
-    const [editingCourse, setEditingCourse] = useState(null);  // Track the course being edited
+    const [departments, setDepartments] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [newCourse, setNewCourse] = useState({ courseName: '', departmentName: '', teacherId: '' });
+    const [editingCourse, setEditingCourse] = useState(null);
 
     useEffect(() => {
         fetchCourses();
-    }, []);
+        fetchDepartments();
+        console.log("Departments data:", departments); // Add this line
+        fetchTeachers();
+        console.log("Departments data: ", departments);
+    }, [departments.length]);
 
     const fetchCourses = async () => {
         try {
@@ -19,99 +25,83 @@ const Course = () => {
         }
     };
 
+    const fetchDepartments = async () => {
+        try {
+            const response = await axios.get('https://localhost:7062/api/departments');
+            console.log("Departments API Response:", response.data);
+            setDepartments(response.data);
+            console.log("Departments State:", response.data); // Add this line
+        } catch (error) {
+            console.error('Error fetching departments:', error);
+        }
+    };
+
+    const fetchTeachers = async () => {
+        try {
+            const response = await axios.get('https://localhost:7062/api/users');
+            const filteredTeachers = response.data.filter(user => user.role === 'Teacher');
+            setTeachers(filteredTeachers);
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+        }
+    };
+
     const handleAddCourse = async (e) => {
         e.preventDefault();
 
-        // Validate the form input before making the API request
-        if (!newCourse.courseName || !newCourse.departmentId || !newCourse.teacherId) {
+        if (!newCourse.courseName || !newCourse.departmentName || !newCourse.teacherId) {
             console.error('All fields must be filled out');
-            return; // Don't proceed if any field is missing
+            return;
         }
 
         try {
-            // Make the POST request to add the course
-            const response = await axios.post('https://localhost:7062/api/courses', {
-                Title: newCourse.courseName,  // Change "courseTitle" to "Title"
-                departmentID: newCourse.departmentId,
+            await axios.post('https://localhost:7062/api/courses', {
+                Title: newCourse.courseName,
+                departmentName: newCourse.departmentName,
                 teacherID: newCourse.teacherId,
             });
-
-            // Handle successful response
-            console.log('Course added successfully:', response.data);
-
-            // Refresh the course list after adding
             fetchCourses();
-
-            // Reset the form fields
-            setNewCourse({ courseName: '', departmentId: '', teacherId: '' });
+            setNewCourse({ courseName: '', departmentName: '', teacherId: '' });
         } catch (error) {
-            // Handle error during the request
-            if (error.response) {
-                // If the server responded with an error
-                console.error('Error response:', error.response.data);
-            } else if (error.request) {
-                // If no response was received
-                console.error('No response received:', error.request);
-            } else {
-                // Any other error
-                console.error('Error setting up request:', error.message);
-            }
+            console.error('Error adding course:', error);
         }
     };
 
     const handleEditCourse = (course) => {
-        // Set the editing course to populate the form with its data
         setEditingCourse(course);
         setNewCourse({
             courseName: course.title,
-            departmentId: course.departmentID,
+            departmentName: course.department?.name || '',
             teacherId: course.teacherID,
         });
     };
 
     const handleSaveEdit = async (e) => {
         e.preventDefault();
-
-        // Check if the required fields are filled out
-        if (!newCourse.courseName || !newCourse.departmentId || !newCourse.teacherId) {
+        if (!newCourse.courseName || !newCourse.departmentName || !newCourse.teacherId) {
             console.error('All fields must be filled out');
-            return; // Don't proceed if any field is missing
+            return;
         }
 
-
         try {
-            const response = await axios.put(`https://localhost:7062/api/courses/${editingCourse.courseID}`, {
-                CourseID: editingCourse.courseID,  // Ensure CourseID is included
+            await axios.put(`https://localhost:7062/api/courses/${editingCourse.courseID}`, {
+                CourseID: editingCourse.courseID,
                 Title: newCourse.courseName,
-                departmentID: newCourse.departmentId,
+                departmentName: newCourse.departmentName,
                 teacherID: newCourse.teacherId,
             });
-
-            console.log('Course updated successfully:', response.data);
-
-            // Refresh course list
             fetchCourses();
-
-            // Clear editing state and reset form
             setEditingCourse(null);
-            setNewCourse({ courseName: '', departmentId: '', teacherId: '' });
-
-            // Optional: Show success message
-            console.log('Course saved successfully!');
+            setNewCourse({ courseName: '', departmentName: '', teacherId: '' });
         } catch (error) {
             console.error('Error saving course:', error);
-
-            // Optional: Handle error response and show appropriate message
-            if (error.response) {
-                console.error('Error response:', error.response.data);
-            }
-        } 
+        }
     };
 
     const handleDeleteCourse = async (id) => {
         try {
             await axios.delete(`https://localhost:7062/api/courses/${id}`);
-            fetchCourses(); // Refresh the course list after deletion
+            fetchCourses();
         } catch (error) {
             console.error('Error deleting course:', error);
         }
@@ -124,6 +114,7 @@ const Course = () => {
                 {courses.map(course => (
                     <li key={course.courseID}>
                         <strong>{course.title}</strong>
+
                         {course.teacher ? (
                             <span> - Instructor: {course.teacher.fullName}</span>
                         ) : (
@@ -143,18 +134,27 @@ const Course = () => {
                     value={newCourse.courseName}
                     onChange={(e) => setNewCourse({ ...newCourse, courseName: e.target.value })}
                 />
-                <input
-                    type="text"
-                    placeholder="Department ID"
-                    value={newCourse.departmentId}
-                    onChange={(e) => setNewCourse({ ...newCourse, departmentId: e.target.value })}
-                />
-                <input
-                    type="text"
-                    placeholder="Teacher ID"
+                <select
+                    value={newCourse.departmentName}
+                    onChange={(e) => setNewCourse({ ...newCourse, departmentName: e.target.value })}
+                >
+                    <option value="">{console.log("Departments Length:", departments.length) || departments.length === 0 ? "Loading Departments..." : "Select Department"}</option>
+                    {departments.length > 0 && departments.map(department => (
+                        <option key={department.departmentID} value={department.name}>
+                            {department.name} ({department.departmentName})
+                        </option>
+                    ))}
+                </select>
+
+                <select
                     value={newCourse.teacherId}
                     onChange={(e) => setNewCourse({ ...newCourse, teacherId: e.target.value })}
-                />
+                >
+                    <option value="">Select Teacher</option>
+                    {teachers.map(teacher => (
+                        <option key={teacher.userID} value={teacher.userID}>{teacher.fullName}</option>
+                    ))}
+                </select>
                 <button type="submit">{editingCourse ? 'Save Changes' : 'Add'}</button>
             </form>
         </div>

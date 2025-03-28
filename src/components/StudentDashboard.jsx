@@ -3,8 +3,9 @@ import axios from 'axios';
 
 const StudentDashboard = () => {
     const [currentUser, setUser] = useState(null);
-    const [courses, setCourses] = useState([]);
     const [grades, setGrades] = useState([]);
+    const [courses, setCourses] = useState([]);
+    const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [profileDocument, setProfileDocument] = useState(localStorage.getItem('profileDocument') || '');
@@ -23,9 +24,7 @@ const StudentDashboard = () => {
 
     const getHeaders = () => {
         const token = getAuthToken();
-        return {
-            Authorization: `Bearer ${token}`
-        };
+        return { Authorization: `Bearer ${token}` };
     };
 
     const fetchCurrentUser = async () => {
@@ -53,18 +52,26 @@ const StudentDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const [gradesResponse, coursesResponse] = await Promise.all([
-                axios.get(`https://localhost:7062/api/grades?studentId=${currentUser.userID}`, { headers: getHeaders() }),
+            const [gradesResponse, studentsResponse, coursesResponse] = await Promise.all([
+                axios.get('https://localhost:7062/api/grades', { headers: getHeaders() }),
+                axios.get('https://localhost:7062/api/users?role=Student', { headers: getHeaders() }),
                 axios.get('https://localhost:7062/api/courses', { headers: getHeaders() })
             ]);
 
-            const userGrades = gradesResponse.data;
-            const enrolledCourseIds = new Set(userGrades.map(grade => grade.courseID));
+            const studentsMap = Object.fromEntries(studentsResponse.data.map(s => [s.userID, s]));
+            const coursesMap = Object.fromEntries(coursesResponse.data.map(c => [c.courseID, c]));
 
-            const enrolledCourses = coursesResponse.data.filter(course => enrolledCourseIds.has(course.courseID));
+            const userGrades = gradesResponse.data
+                .filter(grade => grade.studentID === currentUser.userID)
+                .map(grade => ({
+                    ...grade,
+                    student: studentsMap[grade.studentID] || null,
+                    course: coursesMap[grade.courseID] || null
+                }));
 
             setGrades(userGrades);
-            setCourses(enrolledCourses);
+            setStudents(studentsResponse.data);
+            setCourses(coursesResponse.data);
         } catch (error) {
             console.error('Error fetching data:', error);
             setError('Error fetching data: ' + error.message);
@@ -87,7 +94,7 @@ const StudentDashboard = () => {
                     <h2>Welcome {currentUser.fullName}</h2>
                     {profileDocument ? (
                         <div>
-                            {profileDocument.endsWith('.pdf') ? (
+                            {profileDocument.endsWith('.all') ? (
                                 <p>Profile Document: <a href={profileDocument} target="_blank" rel="noopener noreferrer">View Document</a></p>
                             ) : (
                                 <img src={profileDocument} alt="Profile" style={{ width: '150px', height: '150px', borderRadius: '50%' }} />
@@ -100,31 +107,31 @@ const StudentDashboard = () => {
                 </div>
             )}
 
-            <h2>Your Enrolled Courses</h2>
-            <ul>
-                {courses.length > 0 ? (
-                    courses.map(course => (
+            {grades.length > 0 && (
+                <div>
+                    <h2>Your Grades</h2>
+                    <ul>
+                        {grades.map(grade => (
+                            <li key={grade.gradeID}>
+                                {grade.gradeValue} - Course: {grade.course ? grade.course.title : 'No Course'}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            <h2>All Courses</h2>
+            {courses.length > 0 ? (
+                <ul>
+                    {courses.map(course => (
                         <li key={course.courseID}>
                             <strong>{course.title}</strong> - Instructor: {course.teacher?.fullName || 'Not Assigned'}
                         </li>
-                    ))
-                ) : (
-                    <li>You are not enrolled in any courses.</li>
-                )}
-            </ul>
-
-            <h2>Your Grades</h2>
-            <ul>
-                {grades.length > 0 ? (
-                    grades.map(grade => (
-                        <li key={grade.gradeID}>
-                            {grade.gradeValue} - Course: {courses.find(c => c.courseID === grade.courseID)?.title || 'Not Available'}
-                        </li>
-                    ))
-                ) : (
-                    <li>No grades available</li>
-                )}
-            </ul>
+                    ))}
+                </ul>
+            ) : (
+                <p>You are not enrolled in any courses.</p>
+            )}
         </div>
     );
 };
