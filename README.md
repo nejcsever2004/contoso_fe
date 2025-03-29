@@ -1,110 +1,121 @@
-# Contoso University Frontend Documentation
+# Contoso University Frontend
 
 ## Overview
 
-This document provides an in-depth overview of the Contoso University Frontend project, detailing the technologies utilized, the structure of the project, and comprehensive explanations of its components.
+The **Contoso University Frontend** is a React-based web application that provides a user-friendly interface for students to manage their academic records. It interacts with the **Contoso University Backend**, allowing users to register, log in, view their schedules, check grades, and manage their courses. 
 
-## Technologies Used
-
-- **Programming Language**: JavaScript
-- **Framework**: ASP.NET React
-- **State Management**: React Context API / Redux (if used)
-- **Package Manager**: npm / yarn
-- **IDE**: Visual Studio Code
-
-## Project Structure
-
-The solution comprises several key directories:
-
-- **src/components**: Contains reusable React components.
-- **src/pages**: Holds the main application pages.
-- **src/services**: Includes API call functions.
-- **src/context**: Manages global state.
-- **public**: Stores static assets such as images and the main `index.html` file.
-- **node_modules**: Contains project dependencies.
-
-## Components and Pages
-
-### Login Page
-- **Description**: Allows users to enter credentials and authenticate.
-- **Key Features**:
-  - Inputs for email and password.
-  - API call to backend authentication endpoint.
-  - Redirects user upon successful login.
-
-### Registration Page
-- **Description**: Enables new users to create an account.
-- **Key Features**:
-  - Form validation for required fields.
-  - Password confirmation logic.
-  - API call to register a new user.
-
-### Dashboard
-- **Description**: Main user interface displaying courses, schedules, and grades.
-- **Key Features**:
-  - Fetches and displays user-specific data from the backend.
-  - Navigation menu for different sections.
-
-## API Integration
-
-The **services** directory contains functions that make API calls to the backend.
-
-### authService.js
-- **Methods**:
-  - `login(email, password)`: Sends credentials to the backend and stores authentication token.
-  - `register(userData)`: Registers a new user.
-
-### studentService.js
-- **Methods**:
-  - `getStudentDetails(studentId)`: Fetches student information.
-  - `getGrades(studentId)`: Retrieves student grades.
-  - `getSchedule(studentId)`: Retrieves student schedule.
-
-## Authentication & Authorization
-
-- Uses **JWT authentication** to secure API calls.
-- Protects routes using React Router’s authentication checks.
-- Stores authentication tokens in **localStorage** or **sessionStorage**.
-
-## Error Handling & Logging
-
-### Error Handling
-- Uses React error boundaries to catch UI errors.
-- API responses are handled with appropriate messages to the user.
-
-### Logging
-- Console logging for development.
-- Can be extended with tools like Sentry or LogRocket.
-
-## Deployment Instructions
-
-1. **Clone the Repository**:
-   ```sh
-   git clone https://github.com/nejcsever2004/contoso_fe.git
-   cd contoso_fe
-   ```
-2. **Install Dependencies**:
-   ```sh
-   npm install
-   ```
-3. **Start the Development Server**:
-   ```sh
-   npm start
-   ```
-4. **Build the Application**:
-   ```sh
-   npm run build
-   ```
-5. **Deploy** (Example using Netlify or Vercel):
-   - Upload the `build` folder or connect the repository for automatic deployment.
-
-## Future Enhancements
-
-- Implement **better UI design** using Material-UI or Tailwind CSS.
-- Add **unit tests** using Jest and React Testing Library.
-- Improve **error handling** with custom alerts.
-- Expand **role-based authorization** for different user types.
+This project follows **modern web development practices**, integrating **React Router, Context API/Redux**, and **JWT authentication** to deliver a **secure and efficient user experience**.
 
 ---
 
-This documentation provides an extensive overview of the **Contoso University Frontend** project. 🚀
+## Technologies Used
+
+- **Programming Language**: JavaScript (ES6+)
+- **Framework**: React (with Vite/Webpack)
+- **State Management**: React Context API / Redux (if used)
+- **Routing**: React Router
+- **Authentication**: JWT (JSON Web Token)
+- **Package Manager**: npm / yarn
+- **HTTP Client**: Axios / Fetch API
+- **CSS Framework**: Tailwind CSS / Bootstrap (if used)
+- **IDE**: Visual Studio Code
+
+---
+
+## Project Structure
+
+The project follows a **structured directory layout** for maintainability and scalability.
+
+
+---
+
+## Components and Pages
+
+### **Login Page**
+**Path:** `/login`
+
+#### **Description**:
+- Allows users to **authenticate** using email and password.
+- **Stores JWT tokens** in `localStorage` or `sessionStorage`.
+
+#### **Features**:
+✅ Email and password input fields.  
+✅ "Remember Me" option for persistent login.  
+✅ API call to backend authentication endpoint.  
+✅ Displays error messages for failed logins.  
+✅ Redirects to dashboard after successful login.
+
+---
+
+### **Registration Page**
+**Path:** `/register`
+
+#### **Description**:
+- Enables new users to create an account.
+
+#### **Features**:
+✅ Form validation for required fields.  
+✅ Password strength validation.  
+✅ Password confirmation logic.  
+✅ API call to backend for user registration.  
+✅ Redirects user upon successful registration.
+
+---
+
+### **Dashboard**
+**Path:** `/dashboard`
+
+#### **Description**:
+- Main interface where students view their academic details.
+
+#### **Features**:
+✅ Fetches student data from backend API.  
+✅ Displays **enrolled courses, schedules, and grades**.  
+✅ Navigation menu for switching sections.  
+✅ Logout functionality.
+
+---
+
+### **Grades Page**
+**Path:** `/grades`
+
+#### **Description**:
+- Displays the **student's grades** for completed courses.
+
+#### **Features**:
+✅ API call to fetch student's grades.  
+✅ Table-based grade display.  
+✅ Color-coded grade status (Pass/Fail).  
+
+---
+
+### **Schedule Page**
+**Path:** `/schedule`
+
+#### **Description**:
+- Shows the **student's class schedule**.
+
+#### **Features**:
+✅ API call to retrieve the class schedule.  
+✅ Calendar-like view for classes.  
+
+---
+
+## API Integration
+
+The **services** directory contains **modular API call functions** to interact with the backend.
+
+### **authService.js**
+Handles authentication-related API requests.
+
+#### **Methods**:
+```js
+const login = async (email, password) => {
+    const response = await axios.post('/api/auth/login', { email, password });
+    return response.data;
+};
+
+const register = async (userData) => {
+    const response = await axios.post('/api/auth/register', userData);
+    return response.data;
+};
