@@ -1,1 +1,2 @@
 C:\Users\Uporabnik\source\repos\contoso_fe\contoso_fe.client\obj\Debug\contoso_fe.client.esproj.CoreCompileInputs.cache
+C:\Users\sever\source\repos\contoso_fe\contoso_fe.client\obj\Debug\contoso_fe.client.esproj.CoreCompileInputs.cache

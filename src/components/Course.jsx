@@ -99,6 +99,10 @@ const Course = () => {
     };
 
     const handleDeleteCourse = async (id) => {
+        const isConfirmed = window.confirm("Do you want to delete this? yes or no? if yes click confirm if no don't click confirm and click cancel :)");
+
+        if (!isConfirmed) return;
+
         try {
             await axios.delete(`https://localhost:7062/api/courses/${id}`);
             fetchCourses();
@@ -106,6 +110,7 @@ const Course = () => {
             console.error('Error deleting course:', error);
         }
     };
+
 
     return (
         <div>
